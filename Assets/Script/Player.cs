@@ -20,28 +20,37 @@ class Idle : State
     {
         while (true)
         {
+            RaycastHit2D Hit;
             {
-                var up_offset = Vector2.Dot(player.velocity * Time.deltaTime, player.up);
-                var dis = Mathf.Max(player.onGroundEpsilon, -up_offset);
-                var Hit = Physics2D.CircleCast(player.pos, player.radius, -player.up, dis, player.groundLayer);
+                var localOffset = player.localVelocity * Time.deltaTime;
+                var dis = Mathf.Max(player.onGroundEpsilon, -localOffset.y);
+                Hit = Physics2D.CircleCast(player.pos, player.radius, -player.up, dis, player.groundLayer);
                 if (Hit)
-                    up_offset = Mathf.Max(up_offset, -Hit.distance);
-                var right_offset = Vector2.Dot(player.velocity * Time.deltaTime, player.right);
-                player.pos = player.pos + up_offset * player.up + right_offset * player.right;
+                    localOffset.y = Mathf.Max(localOffset.y, -Hit.distance);
+                player.pos = player.pos + player.worldDir(localOffset);
                 if (Hit)
                 {
                     player.up = Hit.normal;
-                    player.velocity = player.velocity - Vector2.Dot(player.velocity, player.up) * player.up;
+                    player.localVelocity = new Vector2(player.localVelocity.x, 0);
                 }
 
             }
-            player.velocity = player.velocity - player.up * player.gravity * Time.deltaTime;
+            player.localVelocity -= Vector2.up * player.gravity * Time.deltaTime;
             {
                 var horizontal = Input.GetAxisRaw("Horizontal");
-                player.velocity = player.velocity + player.right * player.inputAcceration * Time.deltaTime * horizontal;
+                player.localVelocity += Vector2.right * player.inputAcceration * Time.deltaTime * horizontal;
             }
+            if (Hit)
             {
-                player.velocity = player.velocity - player.friction * player.velocity.normalized * Time.deltaTime;
+                var right_velocity_dec = player.friction * Time.deltaTime;
+                if (Mathf.Abs(player.localVelocity.x) < right_velocity_dec)
+                {
+                    player.localVelocity = new Vector2(0, player.localVelocity.y);
+                }
+                else
+                {
+                    player.localVelocity -= Vector2.right * Mathf.Sign(player.localVelocity.x) * right_velocity_dec;
+                }
             }
             if (Mathf.Abs(player.velocity.magnitude) < player.velocityEpsilon)
             {
@@ -75,6 +84,14 @@ public class Player : MonoBehaviour
         set { GetComponent<Rigidbody2D>().position = value; }
     }
     public Vector2 velocity = Vector2.zero;
+    public Vector2 localVelocity
+    {
+        get { return new Vector2(Vector2.Dot(velocity, right), Vector2.Dot(velocity, up)); }
+        set
+        {
+            velocity = worldDir(value);
+        }
+    }
     public float gravity;
     public float onGroundEpsilon = 0.1f;
     public Vector2 foot => pos - up * radius;
@@ -107,6 +124,10 @@ public class Player : MonoBehaviour
         if (state != null)
             state.DrawGizmos();
 
+    }
+    public Vector2 worldDir(Vector2 local)
+    {
+        return local.x * right + local.y * up;
     }
     // Update is called once per frame
     void Update()
