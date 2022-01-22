@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 abstract class State
 {
@@ -93,6 +94,12 @@ class Idle : State
                         {
                             hit = currentHit;
                         }
+                    }
+                    var target = currentHit.collider.GetComponent<Target>();
+                    if (target != null && target.isAlive)
+                    {
+                        target.isAlive = false;
+                        GameObject.FindObjectOfType<CameraBehaviour>().exitScene = true;
                     }
                 }
                 if (hit)
@@ -235,6 +242,7 @@ public struct PlayerColor
 
 public class Player : MonoBehaviour
 {
+    public bool InnerEnable = true;
     public Vector2 up = Vector2.up;
     public Vector2 right => new Vector2(up.y, -up.x);
     public Vector2 pos
@@ -274,7 +282,10 @@ public class Player : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Switch(new Idle());
+        if (InnerEnable)
+        {
+            Switch(new Idle());
+        }
     }
     internal void Switch(State newState)
     {
