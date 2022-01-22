@@ -72,7 +72,19 @@ class Idle : State
             {
                 if (player.buttonSwitchSelfCenter)
                 {
-                    player.shouldSelfCenter = Input.GetButton("Stick");
+                    var input = Input.GetButton("Stick");
+                    if (input && !player.shouldSelfCenter)
+                    {
+                        if (player.maxSelfCenterCount > 0)
+                        {
+                            player.maxSelfCenterCount--;
+                            player.shouldSelfCenter = input;
+                        }
+                    }
+                    else
+                    {
+                        player.shouldSelfCenter = input;
+                    }
                 }
             }
             hit = new RaycastHit2D();
@@ -276,6 +288,7 @@ public class Player : MonoBehaviour
     public PlayerColor selfCenterColor = new PlayerColor(Color.white, Color.black);
     public PlayerColor idleColor = new PlayerColor(Color.white, Color.black);
     public float maxUpAngleDiff = 30.0f;
+    public int maxSelfCenterCount = 0;
 
     State state;
 
