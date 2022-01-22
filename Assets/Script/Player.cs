@@ -20,6 +20,11 @@ class Idle : State
     {
         while (true)
         {
+            if (Input.GetButton("Stick"))
+            {
+                player.Switch(new Stick());
+                yield break;
+            }
             RaycastHit2D Hit;
             {
                 var localOffset = player.localVelocity * Time.deltaTime;
@@ -66,14 +71,19 @@ class Idle : State
     }
 }
 
-class OnGround : State
+class Stick : State
 {
     public override IEnumerator Main()
     {
         while (true)
         {
-            yield return null;
+            if (!Input.GetButton("Stick"))
+            {
+                player.Switch(new Idle());
+                yield break;
+            }
 
+            yield return null;
         }
     }
 }
@@ -114,7 +124,7 @@ public class Player : MonoBehaviour
     {
         Switch(new Idle());
     }
-    void Switch(State newState)
+    internal void Switch(State newState)
     {
         if (state != null)
         {
