@@ -20,22 +20,24 @@ class Idle : State
     {
         while (true)
         {
-            if (Input.GetButton("Stick"))
-            {
-                player.Switch(new Stick());
-                yield break;
-            }
-            RaycastHit2D Hit;
+            var hit = new RaycastHit2D();
             {
                 var localOffset = player.localVelocity * Time.deltaTime;
                 var dis = Mathf.Max(player.onGroundEpsilon, -localOffset.y);
-                Hit = Physics2D.CircleCast(player.pos + player.worldDir(new Vector2(localOffset.x, 0.0f)), player.radius, -player.up, dis, player.groundLayer);
-                if (Hit)
-                    localOffset.y = -Hit.distance;
-                player.pos = player.pos + player.worldDir(localOffset);
-                if (Hit)
+                hit = Physics2D.CircleCast(player.pos + player.worldDir(new Vector2(localOffset.x, 0.0f)), player.radius, -player.up, dis, player.groundLayer);
+                if (hit)
                 {
-                    player.up = Hit.normal;
+                    localOffset.y = -hit.distance;
+                    if (Input.GetButton("Stick"))
+                    {
+                        player.Switch(new Stick(hit.collider));
+                        yield break;
+                    }
+                }
+                player.pos = player.pos + player.worldDir(localOffset);
+                if (hit)
+                {
+                    player.up = hit.normal;
                     player.localVelocity = new Vector2(player.localVelocity.x, 0);
                 }
 
@@ -45,7 +47,7 @@ class Idle : State
                 var horizontal = Input.GetAxisRaw("Horizontal");
                 player.localVelocity += Vector2.right * player.inputAcceration * Time.deltaTime * horizontal;
             }
-            if (Hit)
+            if (hit)
             {
                 var right_velocity_dec = player.friction * Time.deltaTime;
                 if (Mathf.Abs(player.localVelocity.x) < right_velocity_dec)
@@ -73,6 +75,12 @@ class Idle : State
 
 class Stick : State
 {
+    Collider2D collider;
+    public Stick(Collider2D collider)
+    {
+        this.collider = collider;
+    }
+
     public override IEnumerator Main()
     {
         while (true)
@@ -81,6 +89,50 @@ class Stick : State
             {
                 player.Switch(new Idle());
                 yield break;
+            }
+            RaycastHit2D hit;
+            {
+                var localOffset = player.localVelocity * Time.deltaTime;
+                var dis = Mathf.Max(player.onGroundEpsilon, -localOffset.y);
+                hit = Physics2D.CircleCast(player.pos + player.worldDir(new Vector2(localOffset.x, 0.0f)), player.radius, -player.up, dis, player.groundLayer);
+                if (hit)
+                {
+                    localOffset.y = -hit.distance;
+                }
+                var worldOffset = player.worldDir(localOffset);
+                collider.transform.position = collider.transform.position - new Vector3(worldOffset.x, worldOffset.y, 0.0f);
+                if (hit)
+                {
+                    var signedAngle = Vector2.SignedAngle(player.up, hit.normal);
+                    collider.transform.RotateAround(player.pos, Vector3.forward, -signedAngle);
+                    player.localVelocity = new Vector2(player.localVelocity.x, 0);
+                }
+
+            }
+            player.localVelocity -= Vector2.up * player.gravity * Time.deltaTime;
+            {
+                var horizontal = Input.GetAxisRaw("Horizontal");
+                player.localVelocity += Vector2.right * player.inputAcceration * Time.deltaTime * horizontal;
+            }
+            if (hit)
+            {
+                var right_velocity_dec = player.friction * Time.deltaTime;
+                if (Mathf.Abs(player.localVelocity.x) < right_velocity_dec)
+                {
+                    player.localVelocity = new Vector2(0, player.localVelocity.y);
+                }
+                else
+                {
+                    player.localVelocity -= Vector2.right * Mathf.Sign(player.localVelocity.x) * right_velocity_dec;
+                }
+            }
+            if (Mathf.Abs(player.velocity.magnitude) < player.velocityEpsilon)
+            {
+                player.velocity = Vector2.zero;
+            }
+            if (Mathf.Abs(player.velocity.magnitude) > player.maxVelocity)
+            {
+                player.velocity = player.velocity.normalized * player.maxVelocity;
             }
 
             yield return null;
