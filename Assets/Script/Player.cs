@@ -266,10 +266,6 @@ class SelfCenter : Idle
     }
     public override bool UpdateRotation()
     {
-        if (hit && hit.collider as BoxCollider2D)
-        {
-            return base.UpdateRotation();
-        }
         if (hit)
         {
             var signedAngle = Vector2.SignedAngle(player.up, hit.normal);

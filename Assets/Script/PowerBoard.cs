@@ -37,7 +37,7 @@ public class PowerBoard : MonoBehaviour
         }
         else
         {
-            tmp.text = System.String.Format("Press Z x {0}", player.maxSelfCenterCount);
+            tmp.text = System.String.Format("Hold Z x {0}\nRelease to cancel", player.maxSelfCenterCount);
         }
         if (player.maxSelfCenterCount == 0 && !player.shouldSelfCenter)
         {
