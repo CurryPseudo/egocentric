@@ -48,18 +48,24 @@ class Idle : State
     }
     public override IEnumerator Main()
     {
+        {
+
+            var currentColor = CurrentColor();
+            foreach (var renderer in player.OutlineRenderers)
+            {
+                renderer.color = currentColor.outline;
+            }
+            foreach (var renderer in player.Renderers)
+            {
+                renderer.color = currentColor.color;
+            }
+        }
         while (true)
         {
             {
-
-                var currentColor = CurrentColor();
-                foreach (var renderer in player.OutlineRenderers)
+                if (player.buttonSwitchSelfCenter)
                 {
-                    renderer.color = currentColor.outline;
-                }
-                foreach (var renderer in player.Renderers)
-                {
-                    renderer.color = currentColor.color;
+                    player.shouldSelfCenter = Input.GetButton("Stick");
                 }
             }
             hit = new RaycastHit2D();
@@ -186,6 +192,7 @@ public class Player : MonoBehaviour
     public float velocityEpsilon = 0.1f;
     public float maxVelocity = 3f;
     public bool shouldSelfCenter = false;
+    public bool buttonSwitchSelfCenter = false;
     public List<SpriteRenderer> OutlineRenderers = new List<SpriteRenderer>();
     public List<SpriteRenderer> Renderers = new List<SpriteRenderer>();
     public PlayerColor selfCenterColor = new PlayerColor(Color.white, Color.black);
