@@ -13,6 +13,7 @@ abstract class State
 class Idle : State
 {
     internal RaycastHit2D hit;
+    internal Vector2 normalNotSmoothed;
     internal Vector2 localOffset;
     public override void DrawGizmos()
     {
@@ -30,17 +31,22 @@ class Idle : State
         }
         return false;
     }
-    public virtual void UpdateTransform()
+    public virtual void UpdateTranslation()
     {
         player.pos = player.pos + player.worldDir(localOffset);
-        var angleOffset = -localOffset.x / (2 * Mathf.PI * player.radius) * 360;
-        player.transform.rotation = player.transform.rotation * Quaternion.AngleAxis(angleOffset, Vector3.forward);
-        if (hit)
+
+    }
+    public virtual void UpdateRotation()
+    {
+        if (ShouldStick())
         {
             player.up = hit.normal;
-            player.localVelocity = new Vector2(player.localVelocity.x, 0);
         }
 
+    }
+    public bool ShouldStick()
+    {
+        return hit;
     }
     public virtual PlayerColor CurrentColor()
     {
@@ -72,7 +78,59 @@ class Idle : State
             {
                 localOffset = player.localVelocity * Time.deltaTime;
                 var dis = Mathf.Max(player.onGroundEpsilon, -localOffset.y);
-                hit = Physics2D.CircleCast(player.pos + player.worldDir(new Vector2(localOffset.x, 0.0f)), player.radius, -player.up, dis, player.groundLayer);
+                var hits = Physics2D.CircleCastAll(player.pos + player.worldDir(new Vector2(localOffset.x, 0.0f)), player.radius, -player.up, dis, player.groundLayer);
+                foreach (var currentHit in hits)
+                {
+                    if (!hit)
+                    {
+                        hit = currentHit;
+                    }
+                    else
+                    {
+                        var currentAngle = Mathf.Abs(Vector2.SignedAngle(player.up, currentHit.normal));
+                        var angle = Mathf.Abs(Vector2.SignedAngle(player.up, hit.normal));
+                        if (currentAngle < angle)
+                        {
+                            hit = currentHit;
+                        }
+                    }
+                }
+                if (hit)
+                {
+                    var box = hit.collider as BoxCollider2D;
+                    if (box)
+                    {
+                        Vector2 boxLocalPoint = box.transform.InverseTransformPoint(hit.point);
+                        var dir = boxLocalPoint - box.offset;
+                        if (Mathf.Abs(dir.y / dir.x) >= box.size.y / box.size.x)
+                        {
+                            if (dir.y >= 0)
+                            {
+                                normalNotSmoothed = box.transform.TransformDirection(Vector2.up);
+                            }
+                            else
+                            {
+                                normalNotSmoothed = box.transform.TransformDirection(Vector2.down);
+                            }
+                        }
+                        else
+                        {
+                            if (dir.x >= 0)
+                            {
+                                normalNotSmoothed = box.transform.TransformDirection(Vector2.right);
+                            }
+                            else
+                            {
+                                normalNotSmoothed = box.transform.TransformDirection(Vector2.left);
+                            }
+
+                        }
+                    }
+                    else
+                    {
+                        normalNotSmoothed = hit.normal;
+                    }
+                }
                 if (hit)
                 {
                     localOffset.y = -hit.distance;
@@ -81,9 +139,17 @@ class Idle : State
                 {
                     yield break;
                 }
-                UpdateTransform();
+                var angleOffset = -localOffset.x / (2 * Mathf.PI * player.radius) * 360;
+                player.transform.rotation = player.transform.rotation * Quaternion.AngleAxis(angleOffset, Vector3.forward);
+                UpdateTranslation();
+                UpdateRotation();
+                if (hit)
+                {
+                    player.localVelocity = new Vector2(player.localVelocity.x, 0);
+                }
             }
             player.localVelocity -= Vector2.up * player.gravity * Time.deltaTime;
+            if (ShouldStick())
             {
                 var horizontal = Input.GetAxisRaw("Horizontal");
                 player.localVelocity += Vector2.right * player.inputAcceration * Time.deltaTime * horizontal;
@@ -135,20 +201,24 @@ class SelfCenter : Idle
     {
         return player.selfCenterColor;
     }
-    public override void UpdateTransform()
+    public override void UpdateTranslation()
     {
         var worldOffset = player.worldDir(localOffset);
-        var angleOffset = -localOffset.x / (2 * Mathf.PI * player.radius) * 360;
-        player.transform.rotation = player.transform.rotation * Quaternion.AngleAxis(angleOffset, Vector3.forward);
         sticked.position = sticked.position - new Vector3(worldOffset.x, worldOffset.y, 0.0f);
+    }
+    public override void UpdateRotation()
+    {
+        if (hit && hit.collider as BoxCollider2D)
+        {
+            base.UpdateRotation();
+            return;
+        }
         if (hit)
         {
             var signedAngle = Vector2.SignedAngle(player.up, hit.normal);
             sticked.RotateAround(player.pos, Vector3.forward, -signedAngle);
-            player.localVelocity = new Vector2(player.localVelocity.x, 0);
         }
     }
-
 }
 
 [Serializable]
@@ -197,6 +267,7 @@ public class Player : MonoBehaviour
     public List<SpriteRenderer> Renderers = new List<SpriteRenderer>();
     public PlayerColor selfCenterColor = new PlayerColor(Color.white, Color.black);
     public PlayerColor idleColor = new PlayerColor(Color.white, Color.black);
+    public float maxUpAngleDiff = 30.0f;
 
     State state;
 
