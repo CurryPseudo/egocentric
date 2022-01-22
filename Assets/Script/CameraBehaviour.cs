@@ -23,6 +23,7 @@ public class CameraBehaviour : MonoBehaviour
     Player player;
     float originSize;
     float currentTime = 0;
+    public float maxAngleSpeed = 360f;
     // Start is called before the first frame update
     void Start()
     {
@@ -40,8 +41,10 @@ public class CameraBehaviour : MonoBehaviour
             exitScene = true;
         }
         {
-            var angle = Vector2.SignedAngle(player.up, Vector2.up);
-            transform.rotation = Quaternion.Euler(0, 0, -angle);
+            var localPlayerUp = transform.InverseTransformDirection(player.up);
+            var angle = Vector2.SignedAngle(Vector2.up, localPlayerUp);
+            angle = Mathf.Min(Mathf.Abs(angle), maxAngleSpeed * Time.deltaTime) * Mathf.Sign(angle);
+            transform.Rotate(Vector3.forward, angle);
             transform.position = new Vector3(player.pos.x, player.pos.y, transform.position.z);
         }
         {

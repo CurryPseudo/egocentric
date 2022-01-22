@@ -90,29 +90,55 @@ class Idle : State
             hit = new RaycastHit2D();
             {
                 localOffset = player.localVelocity * Time.deltaTime;
-                var dis = Mathf.Max(player.onGroundEpsilon, -localOffset.y);
-                var hits = Physics2D.CircleCastAll(player.pos + player.worldDir(new Vector2(localOffset.x, 0.0f)), player.radius, -player.up, dis, player.groundLayer);
-                foreach (var currentHit in hits)
+                //{
+                //    var dir = player.worldDir(new Vector2(localOffset.x, 0.0f));
+                //    var hits = Physics2D.CircleCastAll(player.pos, player.radius, player.right * Mathf.Sign(localOffset.x), localOffset.x, player.groundLayer);
+                //    foreach (var currentHit in hits)
+                //    {
+                //        if (!hit)
+                //        {
+                //            hit = currentHit;
+                //        }
+                //        else
+                //        {
+                //            if (currentHit.distance < hit.distance)
+                //            {
+                //                hit = currentHit;
+                //            }
+                //        }
+                //        var target = currentHit.collider.GetComponent<Target>();
+                //        var cameraBehaviour = GameObject.FindObjectOfType<CameraBehaviour>();
+                //        if (target != null && target.isAlive && !cameraBehaviour.exitScene)
+                //        {
+                //            target.isAlive = false;
+                //            cameraBehaviour.exitScene = true;
+                //        }
+                //    }
+                //}
+                if (!hit)
                 {
-                    if (!hit)
+                    var dis = Mathf.Max(player.onGroundEpsilon, -localOffset.y);
+                    var hits = Physics2D.CircleCastAll(player.pos + player.worldDir(new Vector2(localOffset.x, 0.0f)), player.radius, -player.up, dis, player.groundLayer);
+                    foreach (var currentHit in hits)
                     {
-                        hit = currentHit;
-                    }
-                    else
-                    {
-                        var currentAngle = Mathf.Abs(Vector2.SignedAngle(player.up, currentHit.normal));
-                        var angle = Mathf.Abs(Vector2.SignedAngle(player.up, hit.normal));
-                        if (currentAngle < angle)
+                        if (!hit)
                         {
                             hit = currentHit;
                         }
-                    }
-                    var target = currentHit.collider.GetComponent<Target>();
-                    var cameraBehaviour = GameObject.FindObjectOfType<CameraBehaviour>();
-                    if (target != null && target.isAlive && !cameraBehaviour.exitScene)
-                    {
-                        target.isAlive = false;
-                        cameraBehaviour.exitScene = true;
+                        else
+                        {
+                            if (currentHit.distance < hit.distance)
+                            {
+                                hit = currentHit;
+                            }
+                        }
+                        var target = currentHit.collider.GetComponent<Target>();
+                        var cameraBehaviour = GameObject.FindObjectOfType<CameraBehaviour>();
+                        if (target != null && target.isAlive && !cameraBehaviour.exitScene)
+                        {
+                            target.isAlive = false;
+                            cameraBehaviour.exitScene = true;
+                        }
                     }
                 }
                 if (hit)
