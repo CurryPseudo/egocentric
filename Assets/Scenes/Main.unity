@@ -530,13 +530,14 @@ MonoBehaviour:
   up: {x: 0, y: 1}
   velocity: {x: 0, y: 0}
   gravity: 3
-  onGroundEpsilon: 0.1
+  onGroundEpsilon: 0.2
   groundLayer:
     serializedVersion: 2
     m_Bits: 1
   inputAcceration: 4
-  friction: 1
+  friction: 2
   velocityEpsilon: 0.01
+  maxVelocity: 3
 --- !u!1 &839690766
 GameObject:
   m_ObjectHideFlags: 0

@@ -24,7 +24,7 @@ class Idle : State
             {
                 var localOffset = player.localVelocity * Time.deltaTime;
                 var dis = Mathf.Max(player.onGroundEpsilon, -localOffset.y);
-                Hit = Physics2D.CircleCast(player.pos, player.radius, -player.up, dis, player.groundLayer);
+                Hit = Physics2D.CircleCast(player.pos + player.worldDir(new Vector2(localOffset.x, 0.0f)), player.radius, -player.up, dis, player.groundLayer);
                 if (Hit)
                     localOffset.y = Mathf.Max(localOffset.y, -Hit.distance);
                 player.pos = player.pos + player.worldDir(localOffset);
@@ -55,6 +55,10 @@ class Idle : State
             if (Mathf.Abs(player.velocity.magnitude) < player.velocityEpsilon)
             {
                 player.velocity = Vector2.zero;
+            }
+            if (Mathf.Abs(player.velocity.magnitude) > player.maxVelocity)
+            {
+                player.velocity = player.velocity.normalized * player.maxVelocity;
             }
 
             yield return new WaitForFixedUpdate();
@@ -101,6 +105,7 @@ public class Player : MonoBehaviour
     public float inputAcceration = 1.0f;
     public float friction = 1.0f;
     public float velocityEpsilon = 0.1f;
+    public float maxVelocity = 3f;
 
     State state;
 
