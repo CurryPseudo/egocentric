@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -20,11 +21,11 @@ class Idle : State
     }
     public virtual bool SwitchState()
     {
-        if (hit && Input.GetButton("Stick"))
+        if (hit && player.shouldSelfCenter)
         {
             var current = hit.collider.transform;
             for (; current.parent != null; current = current.parent) ;
-            player.Switch(new Stick(current));
+            player.Switch(new SelfCenter(current));
             return true;
         }
         return false;
@@ -39,10 +40,26 @@ class Idle : State
         }
 
     }
+    public virtual PlayerColor CurrentColor()
+    {
+        return player.idleColor;
+    }
     public override IEnumerator Main()
     {
         while (true)
         {
+            {
+
+                var currentColor = CurrentColor();
+                foreach (var renderer in player.OutlineRenderers)
+                {
+                    renderer.color = currentColor.outline;
+                }
+                foreach (var renderer in player.Renderers)
+                {
+                    renderer.color = currentColor.color;
+                }
+            }
             hit = new RaycastHit2D();
             {
                 localOffset = player.localVelocity * Time.deltaTime;
@@ -89,22 +106,26 @@ class Idle : State
     }
 }
 
-class Stick : Idle
+class SelfCenter : Idle
 {
     Transform sticked;
-    public Stick(Transform sticked)
+    public SelfCenter(Transform sticked)
     {
         this.sticked = sticked;
     }
     public override bool SwitchState()
     {
-        if (!Input.GetButton("Stick"))
+        if (!player.shouldSelfCenter)
         {
             player.Switch(new Idle());
             return true;
         }
         return false;
 
+    }
+    public override PlayerColor CurrentColor()
+    {
+        return player.selfCenterColor;
     }
     public override void UpdateTransform()
     {
@@ -118,6 +139,18 @@ class Stick : Idle
         }
     }
 
+}
+
+[Serializable]
+public struct PlayerColor
+{
+    public Color color;
+    public Color outline;
+    public PlayerColor(Color color, Color outline)
+    {
+        this.color = color;
+        this.outline = outline;
+    }
 }
 
 public class Player : MonoBehaviour
@@ -148,6 +181,11 @@ public class Player : MonoBehaviour
     public float friction = 1.0f;
     public float velocityEpsilon = 0.1f;
     public float maxVelocity = 3f;
+    public bool shouldSelfCenter = false;
+    public List<SpriteRenderer> OutlineRenderers = new List<SpriteRenderer>();
+    public List<SpriteRenderer> Renderers = new List<SpriteRenderer>();
+    public PlayerColor selfCenterColor = new PlayerColor(Color.white, Color.black);
+    public PlayerColor idleColor = new PlayerColor(Color.white, Color.black);
 
     State state;
 

@@ -123,6 +123,11 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!212 &34565340 stripped
+SpriteRenderer:
+  m_CorrespondingSourceObject: {fileID: 7333657157912480782, guid: 53667a1a5c3164265a29cde7af6b914a, type: 3}
+  m_PrefabInstance: {fileID: 564089192}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &141700832
 GameObject:
   m_ObjectHideFlags: 0
@@ -750,6 +755,14 @@ MonoBehaviour:
   friction: 2
   velocityEpsilon: 0.01
   maxVelocity: 4
+  shouldSelfCenter: 0
+  OutlineRenderers:
+  - {fileID: 1247989419}
+  - {fileID: 1088801629}
+  - {fileID: 34565340}
+  - {fileID: 1078306183}
+  Renderers:
+  - {fileID: 391814826}
 --- !u!1 &839690766
 GameObject:
   m_ObjectHideFlags: 0
@@ -834,6 +847,16 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!212 &1078306183 stripped
+SpriteRenderer:
+  m_CorrespondingSourceObject: {fileID: 7333657157912480782, guid: 53667a1a5c3164265a29cde7af6b914a, type: 3}
+  m_PrefabInstance: {fileID: 597675853}
+  m_PrefabAsset: {fileID: 0}
+--- !u!212 &1088801629 stripped
+SpriteRenderer:
+  m_CorrespondingSourceObject: {fileID: 7333657157912480782, guid: 53667a1a5c3164265a29cde7af6b914a, type: 3}
+  m_PrefabInstance: {fileID: 4754786741829569864}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1209119891
 GameObject:
   m_ObjectHideFlags: 0
