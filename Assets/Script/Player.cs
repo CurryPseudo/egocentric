@@ -32,18 +32,18 @@ class Idle : State
         }
         return false;
     }
-    public virtual void UpdateTranslation()
+    public virtual bool UpdateTranslation()
     {
         player.pos = player.pos + player.worldDir(localOffset);
-
+        return false;
     }
-    public virtual void UpdateRotation()
+    public virtual bool UpdateRotation()
     {
         if (ShouldStick())
         {
             player.up = hit.normal;
         }
-
+        return false;
     }
     public bool ShouldStick()
     {
@@ -160,8 +160,8 @@ class Idle : State
                 }
                 var angleOffset = -localOffset.x / (2 * Mathf.PI * player.radius) * 360;
                 player.transform.rotation = player.transform.rotation * Quaternion.AngleAxis(angleOffset, Vector3.forward);
-                UpdateTranslation();
-                UpdateRotation();
+                if (UpdateTranslation()) { yield break; }
+                if (UpdateRotation()) { yield break; }
                 if (hit)
                 {
                     player.localVelocity = new Vector2(player.localVelocity.x, 0);
@@ -220,23 +220,62 @@ class SelfCenter : Idle
     {
         return player.selfCenterColor;
     }
-    public override void UpdateTranslation()
+    public override bool UpdateTranslation()
     {
         var worldOffset = player.worldDir(localOffset);
+        RaycastHit2D hit = new RaycastHit2D();
+        var currentColliders = sticked.GetComponentsInChildren<Collider2D>();
+        foreach (var collider in currentColliders)
+        {
+            RaycastHit2D[] hits = new RaycastHit2D[10];
+            var num = collider.Cast(worldOffset.normalized, hits, worldOffset.magnitude, false);
+            for (int i = 0; i < num; i++)
+            {
+                var currentHit = hits[i];
+                if ((player.groundLayer.value & (1 << currentHit.transform.gameObject.layer)) == 0) continue;
+                var selfCollider = false;
+                for (int j = 0; j < currentColliders.Length; j++)
+                {
+                    if (currentColliders[j] == currentHit.collider)
+                    {
+                        selfCollider = true;
+                        break;
+                    }
+                }
+                if (selfCollider) continue;
+                if (!hit)
+                {
+                    hit = currentHit;
+                }
+                if (currentHit.distance < hit.distance)
+                {
+                    hit = currentHit;
+                }
+            }
+        }
+        if (hit)
+        {
+            worldOffset = worldOffset.normalized * hit.distance;
+            sticked.position = sticked.position - new Vector3(worldOffset.x, worldOffset.y, 0.0f);
+            player.shouldSelfCenter = false;
+            player.Switch(new Idle());
+            return true;
+        }
         sticked.position = sticked.position - new Vector3(worldOffset.x, worldOffset.y, 0.0f);
+        return false;
     }
-    public override void UpdateRotation()
+    public override bool UpdateRotation()
     {
         if (hit && hit.collider as BoxCollider2D)
         {
-            base.UpdateRotation();
-            return;
+            return base.UpdateRotation();
         }
         if (hit)
         {
             var signedAngle = Vector2.SignedAngle(player.up, hit.normal);
             sticked.RotateAround(player.pos, Vector3.forward, -signedAngle);
         }
+        return false;
     }
 }
 
