@@ -52,6 +52,10 @@ class Idle : State
                 {
                     localOffset.y = -hit.distance;
                 }
+                var stickedCheckDir = player.maxStickedCheckDis * new Vector2(Mathf.Sign(player.localVelocity.x) * Mathf.Cos(
+                    player.maxStickedCheckAngle), -Mathf.Sin(player.maxStickedCheckAngle));
+                hit = Physics2D.CircleCast(player.pos + player.worldDir(new Vector2(stickedCheckDir.x, 0)), player.radius,
+                    player.worldDir(new Vector2(0, stickedCheckDir.y)).normalized, stickedCheckDir.y, player.groundLayer);
                 if (SwitchState())
                 {
                     yield break;
@@ -148,6 +152,8 @@ public class Player : MonoBehaviour
     public float friction = 1.0f;
     public float velocityEpsilon = 0.1f;
     public float maxVelocity = 3f;
+    public float maxStickedCheckDis = 0.1f;
+    public float maxStickedCheckAngle = 10f;
 
     State state;
 
