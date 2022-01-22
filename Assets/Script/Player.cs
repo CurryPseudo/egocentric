@@ -30,7 +30,9 @@ class Idle : State
                     localOffset.y = -hit.distance;
                     if (Input.GetButton("Stick"))
                     {
-                        player.Switch(new Stick(hit.collider));
+                        var current = hit.collider.transform;
+                        for (; current.parent != null; current = current.parent) ;
+                        player.Switch(new Stick(current));
                         yield break;
                     }
                 }
@@ -75,10 +77,10 @@ class Idle : State
 
 class Stick : State
 {
-    Collider2D collider;
-    public Stick(Collider2D collider)
+    Transform sticked;
+    public Stick(Transform sticked)
     {
-        this.collider = collider;
+        this.sticked = sticked;
     }
 
     public override IEnumerator Main()
@@ -100,11 +102,11 @@ class Stick : State
                     localOffset.y = -hit.distance;
                 }
                 var worldOffset = player.worldDir(localOffset);
-                collider.transform.position = collider.transform.position - new Vector3(worldOffset.x, worldOffset.y, 0.0f);
+                sticked.position = sticked.position - new Vector3(worldOffset.x, worldOffset.y, 0.0f);
                 if (hit)
                 {
                     var signedAngle = Vector2.SignedAngle(player.up, hit.normal);
-                    collider.transform.RotateAround(player.pos, Vector3.forward, -signedAngle);
+                    sticked.RotateAround(player.pos, Vector3.forward, -signedAngle);
                     player.localVelocity = new Vector2(player.localVelocity.x, 0);
                 }
 
