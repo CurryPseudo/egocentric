@@ -11,38 +11,52 @@ abstract class State
 
 class Idle : State
 {
+    internal RaycastHit2D hit;
+    internal Vector2 localOffset;
     public override void DrawGizmos()
     {
         var dis = Mathf.Max(player.onGroundEpsilon, -Vector2.Dot(player.velocity, player.up));
         Gizmos.DrawLine(player.foot, player.foot - player.up * dis);
     }
+    public virtual bool SwitchState()
+    {
+        if (hit && Input.GetButton("Stick"))
+        {
+            var current = hit.collider.transform;
+            for (; current.parent != null; current = current.parent) ;
+            player.Switch(new Stick(current));
+            return true;
+        }
+        return false;
+    }
+    public virtual void UpdateTransform()
+    {
+        player.pos = player.pos + player.worldDir(localOffset);
+        if (hit)
+        {
+            player.up = hit.normal;
+            player.localVelocity = new Vector2(player.localVelocity.x, 0);
+        }
+
+    }
     public override IEnumerator Main()
     {
         while (true)
         {
-            var hit = new RaycastHit2D();
+            hit = new RaycastHit2D();
             {
-                var localOffset = player.localVelocity * Time.deltaTime;
+                localOffset = player.localVelocity * Time.deltaTime;
                 var dis = Mathf.Max(player.onGroundEpsilon, -localOffset.y);
                 hit = Physics2D.CircleCast(player.pos + player.worldDir(new Vector2(localOffset.x, 0.0f)), player.radius, -player.up, dis, player.groundLayer);
                 if (hit)
                 {
                     localOffset.y = -hit.distance;
-                    if (Input.GetButton("Stick"))
-                    {
-                        var current = hit.collider.transform;
-                        for (; current.parent != null; current = current.parent) ;
-                        player.Switch(new Stick(current));
-                        yield break;
-                    }
                 }
-                player.pos = player.pos + player.worldDir(localOffset);
-                if (hit)
+                if (SwitchState())
                 {
-                    player.up = hit.normal;
-                    player.localVelocity = new Vector2(player.localVelocity.x, 0);
+                    yield break;
                 }
-
+                UpdateTransform();
             }
             player.localVelocity -= Vector2.up * player.gravity * Time.deltaTime;
             {
@@ -75,71 +89,35 @@ class Idle : State
     }
 }
 
-class Stick : State
+class Stick : Idle
 {
     Transform sticked;
     public Stick(Transform sticked)
     {
         this.sticked = sticked;
     }
-
-    public override IEnumerator Main()
+    public override bool SwitchState()
     {
-        while (true)
+        if (!Input.GetButton("Stick"))
         {
-            if (!Input.GetButton("Stick"))
-            {
-                player.Switch(new Idle());
-                yield break;
-            }
-            RaycastHit2D hit;
-            {
-                var localOffset = player.localVelocity * Time.deltaTime;
-                var dis = Mathf.Max(player.onGroundEpsilon, -localOffset.y);
-                hit = Physics2D.CircleCast(player.pos + player.worldDir(new Vector2(localOffset.x, 0.0f)), player.radius, -player.up, dis, player.groundLayer);
-                if (hit)
-                {
-                    localOffset.y = -hit.distance;
-                }
-                var worldOffset = player.worldDir(localOffset);
-                sticked.position = sticked.position - new Vector3(worldOffset.x, worldOffset.y, 0.0f);
-                if (hit)
-                {
-                    var signedAngle = Vector2.SignedAngle(player.up, hit.normal);
-                    sticked.RotateAround(player.pos, Vector3.forward, -signedAngle);
-                    player.localVelocity = new Vector2(player.localVelocity.x, 0);
-                }
+            player.Switch(new Idle());
+            return true;
+        }
+        return false;
 
-            }
-            player.localVelocity -= Vector2.up * player.gravity * Time.deltaTime;
-            {
-                var horizontal = Input.GetAxisRaw("Horizontal");
-                player.localVelocity += Vector2.right * player.inputAcceration * Time.deltaTime * horizontal;
-            }
-            if (hit)
-            {
-                var right_velocity_dec = player.friction * Time.deltaTime;
-                if (Mathf.Abs(player.localVelocity.x) < right_velocity_dec)
-                {
-                    player.localVelocity = new Vector2(0, player.localVelocity.y);
-                }
-                else
-                {
-                    player.localVelocity -= Vector2.right * Mathf.Sign(player.localVelocity.x) * right_velocity_dec;
-                }
-            }
-            if (Mathf.Abs(player.velocity.magnitude) < player.velocityEpsilon)
-            {
-                player.velocity = Vector2.zero;
-            }
-            if (Mathf.Abs(player.velocity.magnitude) > player.maxVelocity)
-            {
-                player.velocity = player.velocity.normalized * player.maxVelocity;
-            }
-
-            yield return null;
+    }
+    public override void UpdateTransform()
+    {
+        var worldOffset = player.worldDir(localOffset);
+        sticked.position = sticked.position - new Vector3(worldOffset.x, worldOffset.y, 0.0f);
+        if (hit)
+        {
+            var signedAngle = Vector2.SignedAngle(player.up, hit.normal);
+            sticked.RotateAround(player.pos, Vector3.forward, -signedAngle);
+            player.localVelocity = new Vector2(player.localVelocity.x, 0);
         }
     }
+
 }
 
 public class Player : MonoBehaviour
