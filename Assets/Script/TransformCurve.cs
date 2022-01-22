@@ -8,6 +8,7 @@ public class TransformCurve : MonoBehaviour
     public AnimationCurve scaleCurve;
     public AnimationCurve opacityCurve;
     public AnimationCurve angleCurve;
+    public float delay = 0f;
     float currentTime = 0.0f;
     Vector3 originScale;
     Vector3 originPosition;
@@ -16,6 +17,7 @@ public class TransformCurve : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        currentTime = -delay;
         originScale = transform.localScale;
         originPosition = transform.position;
         foreach (var renderer in GetComponentsInChildren<SpriteRenderer>())
@@ -28,6 +30,11 @@ public class TransformCurve : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (currentTime < 0)
+        {
+            currentTime += Time.deltaTime;
+            return;
+        }
         if (scaleCurve.keys.Length > 0)
         {
             var scale = scaleCurve.Evaluate(currentTime);
