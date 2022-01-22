@@ -529,15 +529,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   up: {x: 0, y: 1}
   velocity: {x: 0, y: 0}
-  gravity: 3
-  onGroundEpsilon: 0.2
+  gravity: 5
+  onGroundEpsilon: 0.1
   groundLayer:
     serializedVersion: 2
     m_Bits: 1
-  inputAcceration: 4
+  inputAcceration: 6
   friction: 2
   velocityEpsilon: 0.01
-  maxVelocity: 3
+  maxVelocity: 4
 --- !u!1 &839690766
 GameObject:
   m_ObjectHideFlags: 0

@@ -26,7 +26,7 @@ class Idle : State
                 var dis = Mathf.Max(player.onGroundEpsilon, -localOffset.y);
                 Hit = Physics2D.CircleCast(player.pos + player.worldDir(new Vector2(localOffset.x, 0.0f)), player.radius, -player.up, dis, player.groundLayer);
                 if (Hit)
-                    localOffset.y = Mathf.Max(localOffset.y, -Hit.distance);
+                    localOffset.y = -Hit.distance;
                 player.pos = player.pos + player.worldDir(localOffset);
                 if (Hit)
                 {
