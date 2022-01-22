@@ -33,6 +33,8 @@ class Idle : State
     public virtual void UpdateTransform()
     {
         player.pos = player.pos + player.worldDir(localOffset);
+        var angleOffset = -localOffset.x / (2 * Mathf.PI * player.radius) * 360;
+        player.transform.rotation = player.transform.rotation * Quaternion.AngleAxis(angleOffset, Vector3.forward);
         if (hit)
         {
             player.up = hit.normal;
@@ -130,6 +132,8 @@ class SelfCenter : Idle
     public override void UpdateTransform()
     {
         var worldOffset = player.worldDir(localOffset);
+        var angleOffset = -localOffset.x / (2 * Mathf.PI * player.radius) * 360;
+        player.transform.rotation = player.transform.rotation * Quaternion.AngleAxis(angleOffset, Vector3.forward);
         sticked.position = sticked.position - new Vector3(worldOffset.x, worldOffset.y, 0.0f);
         if (hit)
         {

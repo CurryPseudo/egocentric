@@ -763,6 +763,12 @@ MonoBehaviour:
   - {fileID: 1078306183}
   Renderers:
   - {fileID: 391814826}
+  selfCenterColor:
+    color: {r: 0.654902, g: 0.48235294, b: 0.35686275, a: 1}
+    outline: {r: 0.5019608, g: 0.28627452, b: 0.22745098, a: 1}
+  idleColor:
+    color: {r: 0.9294118, g: 0.882353, b: 0.61960787, a: 1}
+    outline: {r: 0.82745105, g: 0.627451, b: 0.40784317, a: 1}
 --- !u!1 &839690766
 GameObject:
   m_ObjectHideFlags: 0
