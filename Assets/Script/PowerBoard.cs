@@ -9,9 +9,12 @@ public class PowerBoard : MonoBehaviour
     public TransformCurve leaveCurve;
     public TransformCurve textCurve;
     Player player;
+    string formatString;
     // Start is called before the first frame update
     void Start()
     {
+        var tmp = textCurve.GetComponent<TMPro.TextMeshProUGUI>();
+        formatString = tmp.text;
         rectTransform = GetComponent<RectTransform>();
         player = GameObject.FindObjectOfType<Player>();
         if (player.maxSelfCenterCount == 0)
@@ -37,7 +40,7 @@ public class PowerBoard : MonoBehaviour
         }
         else
         {
-            tmp.text = System.String.Format("Hold Z x {0}\nRelease to cancel", player.maxSelfCenterCount);
+            tmp.text = System.String.Format(formatString, player.maxSelfCenterCount);
         }
         if (player.maxSelfCenterCount == 0 && !player.shouldSelfCenter)
         {

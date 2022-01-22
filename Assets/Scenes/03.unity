@@ -180,15 +180,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4286648447230032344, guid: b938d4dae1a1e4e24b59515f0459dec5, type: 3}
       propertyPath: maxSelfCenterCount
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4286648447575893070, guid: b938d4dae1a1e4e24b59515f0459dec5, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 10.5
+      value: 0.02
       objectReference: {fileID: 0}
     - target: {fileID: 4286648447575893070, guid: b938d4dae1a1e4e24b59515f0459dec5, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.3000002
+      value: 2.97
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b938d4dae1a1e4e24b59515f0459dec5, type: 3}

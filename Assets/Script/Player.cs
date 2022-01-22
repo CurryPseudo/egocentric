@@ -108,10 +108,11 @@ class Idle : State
                         }
                     }
                     var target = currentHit.collider.GetComponent<Target>();
-                    if (target != null && target.isAlive)
+                    var cameraBehaviour = GameObject.FindObjectOfType<CameraBehaviour>();
+                    if (target != null && target.isAlive && !cameraBehaviour.exitScene)
                     {
                         target.isAlive = false;
-                        GameObject.FindObjectOfType<CameraBehaviour>().exitScene = true;
+                        cameraBehaviour.exitScene = true;
                     }
                 }
                 if (hit)

@@ -17,6 +17,7 @@ public class CameraBehaviour : MonoBehaviour
             _exitScene = value;
         }
     }
+    bool isRetry = false;
 
     new Camera camera;
     Player player;
@@ -33,6 +34,11 @@ public class CameraBehaviour : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.R) && !exitScene)
+        {
+            isRetry = true;
+            exitScene = true;
+        }
         {
             var angle = Vector2.SignedAngle(player.up, Vector2.up);
             transform.rotation = Quaternion.Euler(0, 0, -angle);
@@ -43,9 +49,16 @@ public class CameraBehaviour : MonoBehaviour
             {
                 if (currentTime > exitSceneCurve.keys[exitSceneCurve.keys.Length - 1].time)
                 {
-                    if (SceneManager.GetActiveScene().buildIndex < SceneManager.sceneCountInBuildSettings - 1)
+                    if (isRetry)
                     {
-                        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+                        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+                    }
+                    else
+                    {
+                        if (SceneManager.GetActiveScene().buildIndex < SceneManager.sceneCountInBuildSettings - 1)
+                        {
+                            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+                        }
                     }
                 }
                 else
