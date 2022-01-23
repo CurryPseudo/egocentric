@@ -16,10 +16,10 @@ class Idle : State
     internal RaycastHit2D hit;
     internal Vector2 normalNotSmoothed;
     internal Vector2 localOffset;
+    event Action onDrawGizmos;
     public override void DrawGizmos()
     {
-        var dis = Mathf.Max(player.onGroundEpsilon, -Vector2.Dot(player.velocity, player.up));
-        Gizmos.DrawLine(player.foot, player.foot - player.up * dis);
+        onDrawGizmos?.Invoke();
     }
     public virtual bool SwitchState()
     {
@@ -53,6 +53,34 @@ class Idle : State
     {
         return player.idleColor;
     }
+    public void UpdateCurrentHit(IEnumerable<RaycastHit2D> hits)
+    {
+        foreach (var currentHit in hits)
+        {
+            if (!hit)
+            {
+                hit = currentHit;
+            }
+            else
+            {
+                if (currentHit.distance < hit.distance)
+                {
+                    hit = currentHit;
+                }
+            }
+            var target = currentHit.collider.GetComponent<Target>();
+            if (target != null)
+            {
+                hit = new RaycastHit2D();
+            }
+            var cameraBehaviour = GameObject.FindObjectOfType<CameraBehaviour>();
+            if (target != null && target.isAlive && !cameraBehaviour.exitScene)
+            {
+                target.isAlive = false;
+                cameraBehaviour.exitScene = true;
+            }
+        }
+    }
     public override IEnumerator Main()
     {
         {
@@ -69,76 +97,79 @@ class Idle : State
         }
         while (true)
         {
+            onDrawGizmos = null;
             {
                 if (player.buttonSwitchSelfCenter)
                 {
-                    var input = Input.GetButton("Stick");
-                    if (input && !player.shouldSelfCenter)
+                    if (Input.GetButton("Stick") && !player.lastStick)
                     {
-                        if (player.maxSelfCenterCount > 0)
+                        if (!player.shouldSelfCenter)
                         {
-                            player.maxSelfCenterCount--;
-                            player.shouldSelfCenter = input;
+                            if (player.maxSelfCenterCount > 0)
+                            {
+                                player.maxSelfCenterCount--;
+                                player.shouldSelfCenter = true;
+                            }
+                        }
+                        else
+                        {
+                            player.shouldSelfCenter = false;
                         }
                     }
-                    else
-                    {
-                        player.shouldSelfCenter = input;
-                    }
+                    player.lastStick = Input.GetButton("Stick");
                 }
             }
             hit = new RaycastHit2D();
             {
                 localOffset = player.localVelocity * Time.deltaTime;
-                //{
-                //    var dir = player.worldDir(new Vector2(localOffset.x, 0.0f));
-                //    var hits = Physics2D.CircleCastAll(player.pos, player.radius, player.right * Mathf.Sign(localOffset.x), localOffset.x, player.groundLayer);
-                //    foreach (var currentHit in hits)
-                //    {
-                //        if (!hit)
-                //        {
-                //            hit = currentHit;
-                //        }
-                //        else
-                //        {
-                //            if (currentHit.distance < hit.distance)
-                //            {
-                //                hit = currentHit;
-                //            }
-                //        }
-                //        var target = currentHit.collider.GetComponent<Target>();
-                //        var cameraBehaviour = GameObject.FindObjectOfType<CameraBehaviour>();
-                //        if (target != null && target.isAlive && !cameraBehaviour.exitScene)
-                //        {
-                //            target.isAlive = false;
-                //            cameraBehaviour.exitScene = true;
-                //        }
-                //    }
-                //}
+                {
+                    var dis = Mathf.Abs(localOffset.x);
+                    var origin = player.pos;
+                    var hits = Physics2D.CircleCastAll(origin, player.radius, player.right * Mathf.Sign(localOffset.x), dis, player.groundLayer);
+                    UpdateCurrentHit(hits);
+                    if (hit)
+                    {
+                        onDrawGizmos += () =>
+                        {
+                            Gizmos.color = Color.red;
+                            var dist = origin + player.right * Mathf.Sign(localOffset.x) * dis;
+                            Gizmos.DrawWireSphere(origin, player.radius);
+                            Gizmos.DrawWireSphere(dist, player.radius);
+                            Gizmos.DrawSphere(hit.point, 0.1f);
+                            Gizmos.DrawLine(hit.point, hit.point + hit.normal);
+                        };
+                        localOffset.x = Mathf.Sign(localOffset.x) * Mathf.Min(hit.distance - player.liftGroundEpsilon, 0f);
+                    }
+                    else
+                    {
+                        onDrawGizmos += () =>
+                        {
+                            Gizmos.color = Color.magenta;
+                            var dist = origin + player.right * Mathf.Sign(localOffset.x) * dis;
+                            Gizmos.DrawWireSphere(origin, player.radius);
+                            Gizmos.DrawWireSphere(dist, player.radius);
+                        };
+
+                    }
+                }
                 if (!hit)
                 {
                     var dis = Mathf.Max(player.onGroundEpsilon, -localOffset.y);
                     var hits = Physics2D.CircleCastAll(player.pos + player.worldDir(new Vector2(localOffset.x, 0.0f)), player.radius, -player.up, dis, player.groundLayer);
-                    foreach (var currentHit in hits)
+                    UpdateCurrentHit(hits);
+                    if (hit)
                     {
-                        if (!hit)
+                        onDrawGizmos += () =>
                         {
-                            hit = currentHit;
-                        }
-                        else
-                        {
-                            if (currentHit.distance < hit.distance)
-                            {
-                                hit = currentHit;
-                            }
-                        }
-                        var target = currentHit.collider.GetComponent<Target>();
-                        var cameraBehaviour = GameObject.FindObjectOfType<CameraBehaviour>();
-                        if (target != null && target.isAlive && !cameraBehaviour.exitScene)
-                        {
-                            target.isAlive = false;
-                            cameraBehaviour.exitScene = true;
-                        }
+                            Gizmos.color = Color.yellow;
+                            var origin = player.pos + player.worldDir(new Vector2(localOffset.x, 0.0f));
+                            var dist = origin + -player.up * dis;
+                            Gizmos.DrawWireSphere(origin, player.radius);
+                            Gizmos.DrawWireSphere(dist, player.radius);
+                            Gizmos.DrawSphere(hit.point, 0.1f);
+                            Gizmos.DrawLine(hit.point, hit.point + hit.normal);
+                        };
+                        localOffset.y = Mathf.Min(-hit.distance + player.liftGroundEpsilon, 0f);
                     }
                 }
                 if (hit)
@@ -176,10 +207,6 @@ class Idle : State
                     {
                         normalNotSmoothed = hit.normal;
                     }
-                }
-                if (hit)
-                {
-                    localOffset.y = -hit.distance;
                 }
                 if (SwitchState())
                 {
@@ -335,6 +362,7 @@ public class Player : MonoBehaviour
     }
     public float gravity;
     public float onGroundEpsilon = 0.1f;
+    public float liftGroundEpsilon = 0.1f;
     public Vector2 foot => pos - up * radius;
     public float radius => GetComponent<CircleCollider2D>().radius;
     public new Collider2D collider => GetComponent<CircleCollider2D>();
@@ -351,6 +379,7 @@ public class Player : MonoBehaviour
     public PlayerColor idleColor = new PlayerColor(Color.white, Color.black);
     public float maxUpAngleDiff = 30.0f;
     public int maxSelfCenterCount = 0;
+    internal bool lastStick = false;
 
     State state;
 

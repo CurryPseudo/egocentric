@@ -172,10 +172,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c01f7cedaba149afb0fffbfbfd690f3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  InnerEnable: 1
   up: {x: 0, y: 1}
   velocity: {x: 0, y: 0}
   gravity: 6
   onGroundEpsilon: 0.1
+  liftGroundEpsilon: 0.05
   groundLayer:
     serializedVersion: 2
     m_Bits: 1
@@ -199,6 +201,7 @@ MonoBehaviour:
     color: {r: 0.9294118, g: 0.882353, b: 0.61960787, a: 1}
     outline: {r: 0.82745105, g: 0.627451, b: 0.40784317, a: 1}
   maxUpAngleDiff: 30
+  maxSelfCenterCount: 0
 --- !u!1 &431159754946090130
 GameObject:
   m_ObjectHideFlags: 0
