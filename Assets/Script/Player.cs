@@ -101,7 +101,7 @@ class Idle : State
             {
                 if (player.buttonSwitchSelfCenter)
                 {
-                    if (Input.GetButton("Stick") && !player.lastStick)
+                    if (Input.GetButton("Stick"))
                     {
                         if (!player.shouldSelfCenter)
                         {
@@ -113,8 +113,12 @@ class Idle : State
                         }
                         else
                         {
-                            player.shouldSelfCenter = false;
                         }
+                    }
+                    else
+                    {
+                        player.shouldSelfCenter = false;
+
                     }
                     player.lastStick = Input.GetButton("Stick");
                 }
@@ -255,10 +259,11 @@ class Idle : State
 
 class SelfCenter : Idle
 {
-    Transform sticked;
+    List<Transform> sticked;
     public SelfCenter(Transform sticked)
     {
-        this.sticked = sticked;
+        this.sticked = new List<Transform>();
+        this.sticked.Add(sticked);
     }
     public override bool SwitchState()
     {
@@ -278,7 +283,11 @@ class SelfCenter : Idle
     {
         var worldOffset = player.worldDir(localOffset);
         RaycastHit2D hit = new RaycastHit2D();
-        var currentColliders = sticked.GetComponentsInChildren<Collider2D>();
+        List<Collider2D> currentColliders = new List<Collider2D>();
+        foreach (var t in sticked)
+        {
+            currentColliders.AddRange(t.GetComponentsInChildren<Collider2D>());
+        }
         foreach (var collider in currentColliders)
         {
             RaycastHit2D[] hits = new RaycastHit2D[10];
@@ -287,8 +296,9 @@ class SelfCenter : Idle
             {
                 var currentHit = hits[i];
                 if ((player.groundLayer.value & (1 << currentHit.transform.gameObject.layer)) == 0) continue;
+                if (currentHit.collider.GetComponent<Target>() != null) continue;
                 var selfCollider = false;
-                for (int j = 0; j < currentColliders.Length; j++)
+                for (int j = 0; j < currentColliders.Count; j++)
                 {
                     if (currentColliders[j] == currentHit.collider)
                     {
@@ -310,12 +320,19 @@ class SelfCenter : Idle
         if (hit)
         {
             worldOffset = worldOffset.normalized * hit.distance;
-            sticked.position = sticked.position - new Vector3(worldOffset.x, worldOffset.y, 0.0f);
-            player.shouldSelfCenter = false;
-            player.Switch(new Idle());
-            return true;
+            foreach (var t in sticked)
+            {
+                t.position = t.position - new Vector3(worldOffset.x, worldOffset.y, 0.0f);
+            }
+            var current = hit.collider.transform;
+            for (; current.parent != null; current = current.parent) ;
+            sticked.Add(current);
+            return false;
         }
-        sticked.position = sticked.position - new Vector3(worldOffset.x, worldOffset.y, 0.0f);
+        foreach (var t in sticked)
+        {
+            t.position = t.position - new Vector3(worldOffset.x, worldOffset.y, 0.0f);
+        }
         return false;
     }
     public override bool UpdateRotation()
@@ -323,7 +340,10 @@ class SelfCenter : Idle
         if (hit)
         {
             var signedAngle = Vector2.SignedAngle(player.up, hit.normal);
-            sticked.RotateAround(player.pos, Vector3.forward, -signedAngle);
+            foreach (var t in sticked)
+            {
+                t.RotateAround(player.pos, Vector3.forward, -signedAngle);
+            }
         }
         return false;
     }

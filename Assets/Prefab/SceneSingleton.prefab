@@ -963,7 +963,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Press Z then move
+  m_text: 'Hold Z then move
 
     You have {0} times'
   m_isRightToLeft: 0

@@ -36,7 +36,7 @@ public class PowerBoard : MonoBehaviour
         var tmp = textCurve.GetComponent<TMPro.TextMeshProUGUI>();
         if (player.shouldSelfCenter)
         {
-            tmp.text = "You are not the moving one\nPress Z again to cancel";
+            tmp.text = "You are not the moving one\nRelease Z to cancel";
         }
         else
         {
