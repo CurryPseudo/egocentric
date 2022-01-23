@@ -19,7 +19,15 @@ public class TransformCurve : MonoBehaviour
     {
         currentTime = -delay;
         originScale = transform.localScale;
-        originPosition = transform.position;
+        var rectTransform = transform as RectTransform;
+        if (rectTransform != null)
+        {
+            originPosition = rectTransform.anchoredPosition3D;
+        }
+        else
+        {
+            originPosition = transform.position;
+        }
         foreach (var renderer in GetComponentsInChildren<SpriteRenderer>())
         {
             originOpacity.Add(renderer.color.a);
@@ -42,7 +50,15 @@ public class TransformCurve : MonoBehaviour
         }
         if (yCurve.keys.Length > 0)
         {
-            transform.position = originPosition + new Vector3(0, yCurve.Evaluate(currentTime), 0);
+            var rectTransform = transform as RectTransform;
+            if (rectTransform != null)
+            {
+                rectTransform.anchoredPosition3D = originPosition + new Vector3(0, yCurve.Evaluate(currentTime), 0);
+            }
+            else
+            {
+                transform.position = originPosition + new Vector3(0, yCurve.Evaluate(currentTime), 0);
+            }
         }
         if (opacityCurve.keys.Length > 0)
         {
